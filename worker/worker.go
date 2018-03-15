@@ -1,123 +1,111 @@
 package worker
 
 import (
-    "fmt"
-    "bytes"
-    "encoding/json"
-    "golang.org/x/crypto/ssh"
-    libvirt "github.com/libvirt/libvirt-go"
+	"bytes"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+	"golang.org/x/crypto/ssh"
+	"github.com/fortress-shell/agent/domain"
+	"github.com/fortress-shell/agent/kafka"
+	"github.com/fortress-shell/agent/keys"
+	libvirt "github.com/libvirt/libvirt-go"
 )
 
-type Domain struct {
-    Name string `xml:"name"`
-    Memory int `xml:"memory"`
-    Vcpu int `xml:"vcpu"`
-    Devices struct {
-        Channel struct {
-            Target struct {
-                Type string `xml:"type"`
-                Name string `xml:"type"`
-            } `xml:"target"`
-        } `xml:"channel"`
-        Interface struct {
-            Source struct {
-                Bridge string `xml:"bridge"`
-            } `xml:"source"`
-            VirtualPort struct {
-                Type string `xml:"type"`
-            } `xml:"virtualport"`
-        } `xml:"interface"`
-        Disk struct {
-            Driver struct {
-                Type string `xml:"type,attr"`
-                Cache string `xml:"cache,attr"`
-            } `xml:"driver"`
-            Source struct {
-                File string `xml:"file,attr"`
-            } `xml:"source"`
-            Target struct {
-                Dev string `xml:"dev,attr"`
-                Bus string `xml:"bus,attr"`
-            } `xml:"target"`
-        } `xml:"disk"`
-    } `xml:"devices"`
-    Os struct {
-        Type string `xml:"type"`
-        Boot string `xml:"boot"`
-    } `xml:"os"`
-    Features struct {
-        Acpi string `xml:"acpi"`
-    } `xml:"features"`
+type LibVirt = libvirt.Connect
+
+type Worker struct {
+	// Libvirt connection
+	*LibVirt
+	// Kafka producer instance
+	Logger *kafka.KafkaWriter
+	// SSH connection
+	SSHClient *ssh.Client
+	// Config created with
+	Config *WorkerConfig
+	// Stop channel receive message with os.Signal when job will be stopped
+	Stop <-chan os.Signal
+	// Timeout channel receive message with current
+	// time when job will be timeouted
+	Timeout <-chan time.Time
+	// exit status code
+	ExitCode int
 }
 
-type QemuAgentCommandRequest struct {
-    Execute string `json:"execute"`
-}
+const (
+	TIMEOUT              = 10
+	AUTHORIZED_KEYS_PATH = "/home/ubuntu/.ssh/authorized_keys"
+	IDENTITY_PATH        = "/home/ubuntu/id_rsa"
+	DELAY                = 20
+)
 
-type NetworkInterface struct {
-    Prefix uint32 `json:"prefix"`
-    IpAddress string `json:"ip-address"`
-    IpAddressType string `json:"ip-address-type"`
-}
+func NewWorker(config *WorkerConfig) (*Worker, error) {
+	conn, err := libvirt.NewConnect(config.LibVirtUrl)
+	if err != nil {
+		return nil, err
+	}
 
-type NetworkInterfaces struct {
-    Name string `json:"name"`
-    HardwareAddress string `json:"hardware-address"`
-    IpAddresses []NetworkInterface `json:"ip-addresses"`
-}
+	logger, err := kafka.NewKafkaWriter(
+		config.KafkaUrl,
+		config.Topic,
+		config.Id,
+		config.BuildId,
+	)
+	if err != nil {
+		return nil, err
+	}
 
-type QemuAgentCommandResponse struct {
-    Return []NetworkInterfaces `json:"return"`
-}
+	stop := make(chan os.Signal)
+	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)
 
-func Work() {
-    fmt.Println("fuck")
-    conn, err := libvirt.NewConnect("qemu:///system")
-    if err != nil {
-        panic(err)
-    }
-    defer conn.Close()
-    command := &QemuAgentCommandRequest{
-        Execute: "guest-network-get-interfaces",
-    }
-    jsonCommand, _ := json.Marshal(command)
-    doms, err := conn.ListAllDomains(libvirt.CONNECT_LIST_DOMAINS_SHUTOFF)
-    if err != nil {
-        panic(err)
-    }
-    sshConfig := &ssh.ClientConfig{
-        User: "ubuntu",
-        Auth: []ssh.AuthMethod{
-            ssh.Password("passw0rd"),
-        },
-        HostKeyCallback: ssh.InsecureIgnoreHostKey(),
-    }
-    for _, dom := range doms {
-        dm, err := dom.GetName()
-        fmt.Println(dm)
-        dom.Create()
+	xml, err := domain.NewDomainXml(domain.Config{
+		ImagePath: config.VmPath,
+		Memory:    config.Memory,
+		Name:      config.Id,
+	})
+	if err != nil {
+		return nil, err
+	}
+	dom, err := conn.DomainCreateXML(*xml, libvirt.DOMAIN_START_AUTODESTROY)
+	if err != nil {
+		return nil, err
+	}
 
-        name, err := dom.QemuAgentCommand(string(jsonCommand), libvirt.DOMAIN_QEMU_AGENT_COMMAND_MIN, 0)
-        for err != nil {
-            name, err = dom.QemuAgentCommand(string(jsonCommand), libvirt.DOMAIN_QEMU_AGENT_COMMAND_MIN, 0)
-        }
-        var keys QemuAgentCommandResponse
-        json.Unmarshal([]byte(name), &keys)
-        if err == nil {
-            fmt.Printf("%s\n", name)
-        } else {
-            panic(err)
-        }
-        var buffer bytes.Buffer
-        buffer.WriteString(keys.Return[1].IpAddresses[0].IpAddress)
-        buffer.WriteString(":22")
-        connection, err := ssh.Dial("tcp", buffer.String(), sshConfig)
-        for err != nil {
-            connection, err = ssh.Dial("tcp", buffer.String(), sshConfig)
-        }
-        session, err := connection.NewSession()
-        err = session.Run("ls -la > fuckme.txt")
-        fmt.Println("fuck")
-        dom.Free()
-    }
+	<-time.After(DELAY * time.Second)
+
+	adom := domain.AgentDomain{dom}
+	interfaces, err := adom.GetNetworkInterfaces()
+	if err != nil {
+		return nil, err
+	}
+	sshClientConfig, publicKey, err := keys.NewKeyPair()
+	if err != nil {
+		return nil, err
+	}
+	err = adom.HighLevelWriteFile(AUTHORIZED_KEYS_PATH, publicKey)
+	if err != nil {
+		return nil, err
+	}
+	err = adom.HighLevelWriteFile(IDENTITY_PATH, []byte(config.Identity))
+	if err != nil {
+		return nil, err
+	}
+	var connUrl bytes.Buffer
+	connUrl.WriteString(interfaces.Return[1].IpAddresses[0].IpAddress)
+	connUrl.WriteString(":22")
+	ipWithPort := connUrl.String()
+	connection, err := ssh.Dial("tcp", ipWithPort, sshClientConfig)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Worker{
+		Config:    config,
+		Stop:      stop,
+		Timeout:   time.After(TIMEOUT * time.Minute),
+		Logger:    logger,
+		LibVirt:   conn,
+		SSHClient: connection,
+	}, nil
 }
