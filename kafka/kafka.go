@@ -1,9 +1,9 @@
 package kafka
 
 import (
+	"strings"
 	"encoding/json"
 	"github.com/Shopify/sarama"
-	"strings"
 )
 
 type KafkaWriter struct {

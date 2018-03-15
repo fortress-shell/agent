@@ -1,10 +1,10 @@
 package parser
 
 import (
+	"os"
+	"io/ioutil"
 	"github.com/fortress-shell/agent/steps"
 	"github.com/go-yaml/yaml"
-	"io/ioutil"
-	"os"
 )
 
 type Payload struct {

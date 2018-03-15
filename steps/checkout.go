@@ -2,8 +2,8 @@ package steps
 
 import (
 	"fmt"
-	"github.com/fortress-shell/agent/worker"
 	"os"
+	"github.com/fortress-shell/agent/worker"
 )
 
 type OverrideCheckoutStep struct {
