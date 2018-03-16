@@ -2,13 +2,13 @@ package worker
 
 import (
 	"bytes"
+	"fmt"
 	"github.com/fortress-shell/agent/domain"
 	"github.com/fortress-shell/agent/kafka"
 	"github.com/fortress-shell/agent/keys"
 	libvirt "github.com/libvirt/libvirt-go"
 	"golang.org/x/crypto/ssh"
 	"os"
-	"fmt"
 	"os/signal"
 	"syscall"
 	"time"

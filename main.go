@@ -16,12 +16,13 @@ const (
 	FORTRESS_ERROR_STATUS = iota
 )
 
-var path string = os.Getenv("NOMAD_META_CONFIG_PATH")
-var libvirtUrl string = os.Getenv("NOMAD_META_LIBVIRT_URL")
-var kafkaUrl string = os.Getenv("NOMAD_META_KAFKA_URL")
+var path string = os.Getenv("CONFIG_PATH")
+var vmPath string = os.Getenv("VM_PATH")
+var kafkaUrl string = os.Getenv("KAFKA_URL")
+var libvirtUrl string = os.Getenv("LIBVIRT_URL")
+
 var topic string = os.Getenv("NOMAD_DC")
 var id string = os.Getenv("NOMAD_JOB_NAME")
-var vmPath string = os.Getenv("NOMAD_META_VM_PATH")
 var buildId string = os.Getenv("NOMAD_META_BUILD_ID")
 var repo string = os.Getenv("NOMAD_META_REPO")
 var branch string = os.Getenv("NOMAD_META_BRANCH")
@@ -37,6 +38,7 @@ func main() {
 	}
 
 	tasks := parser.GenerateSteps(payload)
+
 	config := &worker.WorkerConfig{
 		LibVirtUrl: libvirtUrl,
 		KafkaUrl:   kafkaUrl,

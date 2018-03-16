@@ -1,8 +1,8 @@
 package steps
 
 import (
-	"fmt"
 	"bytes"
+	"fmt"
 	"github.com/fortress-shell/agent/kafka"
 	"github.com/fortress-shell/agent/worker"
 )
