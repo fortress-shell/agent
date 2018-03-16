@@ -7,14 +7,23 @@ import (
 )
 
 type OverrideCheckoutStep struct {
-	Commit      string
-	Branch      string
 	Environment map[string]string
 }
 
 func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
 	config := app.Config
 	session, err := app.SSHClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stdout
+	err = session.Run("sudo chmod 400 /home/ubuntu/.ssh/id_rsa && echo -e \"Host github.com\n\tStrictHostKeyChecking no\n\" >> ~/.ssh/config")
+	if err != nil {
+		return err
+	}
+	session, err = app.SSHClient.NewSession()
 	if err != nil {
 		return err
 	}
@@ -31,17 +40,20 @@ func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
 	if err != nil {
 		return err
 	}
+	session, err = app.SSHClient.NewSession()
+	if err != nil {
+		return err
+	}
+	defer session.Close()
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stdout
 	gitCheckout := fmt.Sprintf(
-		"cd %s git checkout %s",
+		"cd %s; git checkout %s",
 		config.Repo,
 		config.Commit,
 	)
 	fmt.Println(gitCheckout)
 	err = session.Run(gitCheckout)
-	if err != nil {
-		return err
-	}
-	err = session.Run("mv /home/ubuntu/id_rsa /home/ubuntu/.ssh/id_rsa && chmod 400 /home/ubuntu/.ssh/id_rsa")
 	if err != nil {
 		return err
 	}

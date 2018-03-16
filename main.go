@@ -4,6 +4,7 @@ import (
 	"flag"
 	"github.com/fortress-shell/agent/parser"
 	"github.com/fortress-shell/agent/worker"
+	"golang.org/x/crypto/ssh"
 	"log"
 	"os"
 )
@@ -16,21 +17,21 @@ const (
 	FORTRESS_ERROR_STATUS = iota
 )
 
-func main() {
-	var path string = os.Getenv("NOMAD_META_CONFIG_PATH")
-	var libvirtUrl string = os.Getenv("NOMAD_META_LIBVIRT_URL")
-	var kafkaUrl string = os.Getenv("NOMAD_META_KAFKA_URL")
-	var topic string = os.Getenv("NOMAD_DC")
-	var id string = os.Getenv("NOMAD_JOB_NAME")
-	var vmPath string = os.Getenv("NOMAD_META_VM_PATH")
-	var memory uint64 = 524288
-	var buildId int
-	var repo string = os.Getenv("NOMAD_META_REPO")
-	var branch string = os.Getenv("NOMAD_META_BRANCH")
-	var commit string = os.Getenv("NOMAD_META_COMMIT")
-	var username string = os.Getenv("NOMAD_META_USERNAME")
-	var sshKey string = os.Getenv("NOMAD_META_SSH_KEY")
+var path string = os.Getenv("NOMAD_META_CONFIG_PATH")
+var libvirtUrl string = os.Getenv("NOMAD_META_LIBVIRT_URL")
+var kafkaUrl string = os.Getenv("NOMAD_META_KAFKA_URL")
+var topic string = os.Getenv("NOMAD_DC")
+var id string = os.Getenv("NOMAD_JOB_NAME")
+var vmPath string = os.Getenv("NOMAD_META_VM_PATH")
+var memory uint64 = 524288
+var buildId int
+var repo string = os.Getenv("NOMAD_META_REPO")
+var branch string = os.Getenv("NOMAD_META_BRANCH")
+var commit string = os.Getenv("NOMAD_META_COMMIT")
+var username string = os.Getenv("NOMAD_META_USERNAME")
+var sshKey string = os.Getenv("NOMAD_META_SSH_KEY")
 
+func main() {
 	flag.StringVar(&path, "config", path, "a path to config")
 	flag.IntVar(&buildId, "build-id", 0, "a build id from rails")
 	flag.Parse()
@@ -42,7 +43,6 @@ func main() {
 	}
 
 	tasks := parser.GenerateSteps(payload)
-
 	config := &worker.WorkerConfig{
 		Memory:     memory,
 		LibVirtUrl: libvirtUrl,
@@ -63,12 +63,36 @@ func main() {
 		os.Exit(FORTRESS_ERROR_STATUS)
 	}
 
-	for _, task := range tasks {
+	for _, task := range tasks.Checkout {
 		err := task.Run(app)
 		if err != nil {
-			log.Println(err)
 			app.ExitCode = FORTRESS_ERROR_STATUS
 			goto finish
+		}
+		select {
+		case <-app.Stop:
+			app.ExitCode = STOP_STATUS
+			goto finish
+		case <-app.Timeout:
+			app.ExitCode = TIMEOUT_STATUS
+			goto finish
+		default:
+		}
+	}
+
+	for _, task := range tasks.OverrideBuild {
+		err := task.Run(app)
+		if err != nil {
+			switch t := err.(type) {
+			default:
+				log.Println(t)
+				app.ExitCode = FORTRESS_ERROR_STATUS
+				goto finish
+			case *ssh.ExitError:
+				log.Println("Exit Status:", t.Waitmsg.ExitStatus())
+				app.ExitCode = FAILURE_STATUS
+				goto finish
+			}
 		}
 		select {
 		case <-app.Stop:

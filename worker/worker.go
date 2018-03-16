@@ -2,15 +2,16 @@ package worker
 
 import (
 	"bytes"
-	"os"
-	"os/signal"
-	"syscall"
-	"time"
-	"golang.org/x/crypto/ssh"
 	"github.com/fortress-shell/agent/domain"
 	"github.com/fortress-shell/agent/kafka"
 	"github.com/fortress-shell/agent/keys"
 	libvirt "github.com/libvirt/libvirt-go"
+	"golang.org/x/crypto/ssh"
+	"os"
+	"fmt"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 type LibVirt = libvirt.Connect
@@ -35,9 +36,9 @@ type Worker struct {
 
 const (
 	TIMEOUT              = 10
+	DELAY                = 15
 	AUTHORIZED_KEYS_PATH = "/home/ubuntu/.ssh/authorized_keys"
-	IDENTITY_PATH        = "/home/ubuntu/id_rsa"
-	DELAY                = 20
+	IDENTITY_PATH        = "/home/ubuntu/.ssh/id_rsa"
 )
 
 func NewWorker(config *WorkerConfig) (*Worker, error) {
@@ -72,7 +73,13 @@ func NewWorker(config *WorkerConfig) (*Worker, error) {
 		return nil, err
 	}
 
-	<-time.After(DELAY * time.Second)
+	select {
+	case <-time.After(DELAY * time.Second):
+	case <-stop:
+		conn.Close()
+		logger.Writer.Close()
+		return nil, fmt.Errorf("stopping")
+	}
 
 	adom := domain.AgentDomain{dom}
 	interfaces, err := adom.GetNetworkInterfaces()

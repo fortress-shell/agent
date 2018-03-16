@@ -2,11 +2,6 @@
 machine:
   environment:
     CIRCLE_ENV: test
-# dependencies:
-#   override:
-#     - npm install coffeescript
-#     - gem uninstall bundler
-#     - gem install bundler --pre
 general:
   branches:
     only:
@@ -14,7 +9,13 @@ general:
       - /feature-.*/
 test:
   override:
-    - phpunit test/unit-tests
+    - echo $CIRCLE_ENV
+
+# dependencies:
+#   override:
+#     - npm install coffeescript
+#     - gem uninstall bundler
+#     - gem install bundler --pre
 # deployment:
 #   override:
 #     - phpunit test/unit-tests

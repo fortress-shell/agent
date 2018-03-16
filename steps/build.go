@@ -1,6 +1,8 @@
 package steps
 
 import (
+	"fmt"
+	"bytes"
 	"github.com/fortress-shell/agent/kafka"
 	"github.com/fortress-shell/agent/worker"
 )
@@ -15,18 +17,22 @@ const (
 )
 
 func (s *OverrideBuildStep) Run(app *worker.Worker) error {
-	logger := kafka.KafkaStageWriter{app.Logger, BUILD_STAGE, s.Command}
+	var command bytes.Buffer
+	logger := &kafka.KafkaStageWriter{app.Logger, BUILD_STAGE, s.Command}
 	session, err := app.SSHClient.NewSession()
 	if err != nil {
 		return err
 	}
 	defer session.Close()
 	for k, v := range s.Environment {
-		session.Setenv(k, v)
+		command.WriteString(fmt.Sprintf("export %s=%s;", k, v))
 	}
-	session.Stdout = &logger
-	session.Stderr = &logger
-	err = session.Run(s.Command)
+	command.WriteString(fmt.Sprintf("cd %s;", app.Config.Repo))
+	command.WriteString(s.Command)
+	session.Stdout = logger
+	session.Stderr = logger
+	fmt.Println(command.String())
+	err = session.Run(command.String())
 	if err != nil {
 		return err
 	}

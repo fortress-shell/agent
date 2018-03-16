@@ -22,7 +22,7 @@ const DOMAIN_TEMPLATE = `
      <features>
         <acpi/>
      </features>
-     <vcpu>0.5</vcpu>
+     <vcpu>1</vcpu>
      <devices>
         <channel type="unix">
            <target type="virtio" name="org.qemu.guest_agent.0" />

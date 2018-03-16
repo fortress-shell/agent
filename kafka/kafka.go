@@ -1,9 +1,10 @@
 package kafka
 
 import (
-	"strings"
 	"encoding/json"
 	"github.com/Shopify/sarama"
+	"log"
+	"strings"
 )
 
 type KafkaWriter struct {
@@ -29,14 +30,15 @@ type Log struct {
 }
 
 func (k *KafkaStageWriter) Write(p []byte) (n int, err error) {
-	log := Log{
+	log.Println(string(p))
+	logEntry := Log{
 		BuildId:  k.BuildId,
 		Position: k.Position,
 		Content:  string(p),
 		Stage:    k.Stage,
 		Command:  k.Command,
 	}
-	b, err := json.Marshal(log)
+	b, err := json.Marshal(logEntry)
 	if err != nil {
 		return 0, err
 	}
