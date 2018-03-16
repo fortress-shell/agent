@@ -7,14 +7,13 @@ import (
 
 type Config struct {
 	ImagePath string
-	Memory    uint64
 	Name      string
 }
 
 const DOMAIN_TEMPLATE = `
   <domain type="kvm">
      <name>{{ .Name }}</name>
-     <memory>{{ .Memory }}</memory>
+     <memory>524288</memory>
      <os>
         <type>hvm</type>
         <boot dev="hd" />
