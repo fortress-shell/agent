@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"github.com/fortress-shell/agent/parser"
 	"github.com/fortress-shell/agent/worker"
 	"golang.org/x/crypto/ssh"
@@ -23,8 +22,7 @@ var kafkaUrl string = os.Getenv("NOMAD_META_KAFKA_URL")
 var topic string = os.Getenv("NOMAD_DC")
 var id string = os.Getenv("NOMAD_JOB_NAME")
 var vmPath string = os.Getenv("NOMAD_META_VM_PATH")
-var memory uint64 = 524288
-var buildId int
+var buildId string = os.Getenv("NOMAD_META_BUILD_ID")
 var repo string = os.Getenv("NOMAD_META_REPO")
 var branch string = os.Getenv("NOMAD_META_BRANCH")
 var commit string = os.Getenv("NOMAD_META_COMMIT")
@@ -32,10 +30,6 @@ var username string = os.Getenv("NOMAD_META_USERNAME")
 var sshKey string = os.Getenv("NOMAD_META_SSH_KEY")
 
 func main() {
-	flag.StringVar(&path, "config", path, "a path to config")
-	flag.IntVar(&buildId, "build-id", 0, "a build id from rails")
-	flag.Parse()
-
 	payload, err := parser.NewPayloadFromFilePath(path)
 	if err != nil {
 		log.Println(err)
@@ -44,7 +38,6 @@ func main() {
 
 	tasks := parser.GenerateSteps(payload)
 	config := &worker.WorkerConfig{
-		Memory:     memory,
 		LibVirtUrl: libvirtUrl,
 		KafkaUrl:   kafkaUrl,
 		VmPath:     vmPath,
@@ -62,7 +55,7 @@ func main() {
 		log.Println(err)
 		os.Exit(FORTRESS_ERROR_STATUS)
 	}
-
+	// TODO: refactoring using multisteps
 	for _, task := range tasks.Checkout {
 		err := task.Run(app)
 		if err != nil {

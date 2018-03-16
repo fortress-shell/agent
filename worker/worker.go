@@ -62,7 +62,6 @@ func NewWorker(config *WorkerConfig) (*Worker, error) {
 
 	xml, err := domain.NewDomainXml(domain.Config{
 		ImagePath: config.VmPath,
-		Memory:    config.Memory,
 		Name:      config.Id,
 	})
 	if err != nil {
