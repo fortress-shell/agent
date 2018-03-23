@@ -17,18 +17,6 @@ const (
 )
 
 var path string = os.Getenv("CONFIG_PATH")
-var vmPath string = os.Getenv("VM_PATH")
-var kafkaUrl string = os.Getenv("KAFKA_URL")
-var libvirtUrl string = os.Getenv("LIBVIRT_URL")
-
-var topic string = os.Getenv("NOMAD_DC")
-var id string = os.Getenv("NOMAD_JOB_NAME")
-var buildId string = os.Getenv("NOMAD_META_BUILD_ID")
-var repo string = os.Getenv("NOMAD_META_REPO")
-var branch string = os.Getenv("NOMAD_META_BRANCH")
-var commit string = os.Getenv("NOMAD_META_COMMIT")
-var username string = os.Getenv("NOMAD_META_USERNAME")
-var sshKey string = os.Getenv("NOMAD_META_SSH_KEY")
 
 func main() {
 	payload, err := parser.NewPayloadFromFilePath(path)
@@ -39,19 +27,8 @@ func main() {
 
 	tasks := parser.GenerateSteps(payload)
 
-	config := &worker.WorkerConfig{
-		LibVirtUrl: libvirtUrl,
-		KafkaUrl:   kafkaUrl,
-		VmPath:     vmPath,
-		Id:         id,
-		Commit:     commit,
-		Branch:     branch,
-		Repo:       repo,
-		Username:   username,
-		Topic:      topic,
-		BuildId:    buildId,
-		Identity:   sshKey,
-	}
+	config := worker.DefaultConfig()
+
 	app, err := worker.NewWorker(config)
 	if err != nil {
 		log.Println(err)
