@@ -24,7 +24,7 @@ func DefaultConfig() *WorkerConfig {
 		Id:         os.Getenv("NOMAD_JOB_NAME"),
 		Commit:     os.Getenv("NOMAD_META_COMMIT"),
 		Branch:     os.Getenv("NOMAD_META_BRANCH"),
-		Repo:       os.Getenv("NOMAD_META_REPO"),
+		Repo:       os.Getenv("NOMAD_META_REPOSITORY"),
 		Username:   os.Getenv("NOMAD_META_USERNAME"),
 		Topic:      os.Getenv("NOMAD_DC"),
 		BuildId:    os.Getenv("NOMAD_META_BUILD_ID"),
