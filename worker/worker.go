@@ -52,6 +52,7 @@ func NewWorker(config *WorkerConfig) (*Worker, error) {
 		config.Topic,
 		config.Id,
 		config.BuildId,
+		config.UserId,
 	)
 	if err != nil {
 		return nil, err

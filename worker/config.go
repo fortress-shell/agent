@@ -1,33 +1,25 @@
 package worker
 
-import "os"
+import (
+	"github.com/caarlos0/env"
+)
 
 type WorkerConfig struct {
-	LibVirtUrl string
-	KafkaUrl   string
-	VmPath     string
-	Repo       string
-	Branch     string
-	Commit     string
-	Topic      string
-	Username   string
-	BuildId    string
-	Id         string
-	Identity   string
+	LibVirtUrl string `env:"LIBVIRT_URL"`
+	KafkaUrl   string `env:"KAFKA_URL"`
+	VmPath     string `env:"VM_PATH"`
+	Repository string `env:"NOMAD_META_REPOSITORY"`
+	Branch     string `env:"NOMAD_META_BRANCH"`
+	Commit     string `env:"NOMAD_META_COMMIT"`
+	Topic      string `env:"NOMAD_DC"`
+	BuildId    int `env:"NOMAD_META_BUILD_ID"`
+	UserId     int `env:"NOMAD_META_USER_ID"`
+	Id         string `env:"NOMAD_JOB_NAME"`
+	Identity   string `env:"NOMAD_META_SSH_KEY"`
 }
 
 func DefaultConfig() *WorkerConfig {
-	return &WorkerConfig{
-		LibVirtUrl: os.Getenv("LIBVIRT_URL"),
-		KafkaUrl:   os.Getenv("KAFKA_URL"),
-		VmPath:     os.Getenv("VM_PATH"),
-		Id:         os.Getenv("NOMAD_JOB_NAME"),
-		Commit:     os.Getenv("NOMAD_META_COMMIT"),
-		Branch:     os.Getenv("NOMAD_META_BRANCH"),
-		Repo:       os.Getenv("NOMAD_META_REPOSITORY"),
-		Username:   os.Getenv("NOMAD_META_USERNAME"),
-		Topic:      os.Getenv("NOMAD_DC"),
-		BuildId:    os.Getenv("NOMAD_META_BUILD_ID"),
-		Identity:   os.Getenv("NOMAD_META_SSH_KEY"),
-	}
+	cfg := WorkerConfig{}
+  env.Parse(&cfg)
+	return &cfg
 }

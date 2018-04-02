@@ -11,32 +11,29 @@ type KafkaWriter struct {
 	Writer   sarama.SyncProducer
 	Id       string
 	BuildId  string
+	UserId  string
 	Topic    string
 	Position int
 }
 
 type KafkaStageWriter struct {
 	*KafkaWriter
-	Stage   string
-	Command string
 }
 
 type Log struct {
 	BuildId  string `json:"build_id"`
+	UserId  string `json:"user_id"`
 	Position int    `json:"position"`
 	Content  string `json:"content"`
-	Stage    string `json:"stage"`
-	Command  string `json:"command"`
 }
 
 func (k *KafkaStageWriter) Write(p []byte) (n int, err error) {
 	log.Println(string(p))
 	logEntry := Log{
 		BuildId:  k.BuildId,
+		UserId:  k.UserId,
 		Position: k.Position,
 		Content:  string(p),
-		Stage:    k.Stage,
-		Command:  k.Command,
 	}
 	b, err := json.Marshal(logEntry)
 	if err != nil {
@@ -55,7 +52,8 @@ func (k *KafkaStageWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func NewKafkaWriter(url, topic, id, buildId string) (*KafkaWriter, error) {
+func NewKafkaWriter(url, topic, id, buildId, userId string) (*KafkaWriter,
+	error) {
 	brokerList := strings.Split(url, ",")
 	config := sarama.NewConfig()
 	config.Producer.RequiredAcks = sarama.WaitForAll

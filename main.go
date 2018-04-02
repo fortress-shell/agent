@@ -16,9 +16,9 @@ const (
 	FORTRESS_ERROR_STATUS = iota
 )
 
-var path string = os.Getenv("CONFIG_PATH")
-
 func main() {
+	var path string = os.Getenv("CONFIG_PATH")
+
 	payload, err := parser.NewPayloadFromFilePath(path)
 	if err != nil {
 		log.Println(err)

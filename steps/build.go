@@ -18,7 +18,7 @@ const (
 
 func (s *OverrideBuildStep) Run(app *worker.Worker) error {
 	var command bytes.Buffer
-	logger := &kafka.KafkaStageWriter{app.Logger, BUILD_STAGE, s.Command}
+	logger := &kafka.KafkaStageWriter{app.Logger}
 	session, err := app.SSHClient.NewSession()
 	if err != nil {
 		return err
@@ -29,6 +29,7 @@ func (s *OverrideBuildStep) Run(app *worker.Worker) error {
 	}
 	command.WriteString(fmt.Sprintf("cd %s;", app.Config.Repo))
 	command.WriteString(s.Command)
+	logger.Write([]byte(s.Command))
 	session.Stdout = logger
 	session.Stderr = logger
 	fmt.Println(command.String())
