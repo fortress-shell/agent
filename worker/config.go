@@ -8,7 +8,7 @@ type WorkerConfig struct {
 	LibVirtUrl string `env:"LIBVIRT_URL"`
 	KafkaUrl   string `env:"KAFKA_URL"`
 	VmPath     string `env:"VM_PATH"`
-	Repository string `env:"NOMAD_META_REPOSITORY"`
+	RepositoryUrl string `env:"NOMAD_META_REPOSITORY_URL"`
 	Branch     string `env:"NOMAD_META_BRANCH"`
 	Commit     string `env:"NOMAD_META_COMMIT"`
 	Topic      string `env:"NOMAD_DC"`

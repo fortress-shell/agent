@@ -30,11 +30,10 @@ func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
 	defer session.Close()
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stdout
-	gitCloneRepo := fmt.Sprintf(
-		"git clone ssh://git@github.com/%s/%s --branch %s --single-branch ",
-		config.Username,
-		config.Repo,
-		config.Branch)
+	gitCloneRepo := fmt.Sprintf("git clone ssh://%s --branch %s --single-branch",
+		config.RepositoryUrl,
+		config.Branch,
+	)
 	fmt.Println(gitCloneRepo)
 	err = session.Run(gitCloneRepo)
 	if err != nil {
@@ -48,8 +47,8 @@ func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stdout
 	gitCheckout := fmt.Sprintf(
-		"cd %s; git checkout %s",
-		config.Repo,
+		"cd $(basename %s); git checkout %s",
+		config.RepositoryUrl,
 		config.Commit,
 	)
 	fmt.Println(gitCheckout)
