@@ -11,14 +11,17 @@ type OverrideCheckoutStep struct {
 }
 
 const script = `
-    sudo chmod 400 /home/ubuntu/.ssh/id_rsa;
-    echo -e "Host github.com\n\tStrictHostKeyChecking no\n" >> ~/.ssh/config;
-    git clone ssh://%s --branch %s --single-branch;
-    cd $(basename %s);
-    git checkout %s;
+	set -e pipeline;
+	sudo chown ubuntu:ubuntu /home/ubuntu/.ssh/id_rsa;
+	sudo chmod 600 /home/ubuntu/.ssh/id_rsa;
+	echo -e "Host github.com\n\tStrictHostKeyChecking no\n" > ~/.ssh/config;
+	git clone %s --branch %s --single-branch;
+	cd $(basename %s | cut -f 1 -d '.');
+	git checkout %s;
 `
 
 func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
+	config := app.Config
 	session, err := app.SSHClient.NewSession()
 	if err != nil {
 		return err
@@ -26,13 +29,14 @@ func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
 	defer session.Close()
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stdout
-	setup := fmt.Sprintf(script,
-		app.Config.RepositoryUrl,
-		app.Config.Branch,
-		app.Config.RepositoryUrl,
-		app.Config.Commit,
+	checkout := fmt.Sprintf(script,
+		config.RepositoryUrl,
+		config.Branch,
+		config.RepositoryUrl,
+		config.Commit,
 	)
-	err = session.Run(setup)
+	fmt.Println(checkout)
+	err = session.Run(checkout)
 	if err != nil {
 		return err
 	}

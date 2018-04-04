@@ -24,15 +24,16 @@ func (s *OverrideBuildStep) Run(app *worker.Worker) error {
 		return err
 	}
 	defer session.Close()
+	session.Stdout = logger
+	session.Stderr = logger
 	for k, v := range s.Environment {
 		command.WriteString(fmt.Sprintf("export %s=%s;", k, v))
 	}
-	command.WriteString(fmt.Sprintf("cd $(basename %s);", app.Config.RepositoryUrl))
+	command.WriteString(fmt.Sprintf("cd $(basename %s | cut -f 1 -d '.'); ",
+		app.Config.RepositoryUrl,
+	))
 	command.WriteString(s.Command)
-	logger.Write([]byte(s.Command))
-	session.Stdout = logger
-	session.Stderr = logger
-	fmt.Println(command.String())
+	command.WriteString("\n")
 	err = session.Run(command.String())
 	if err != nil {
 		return err

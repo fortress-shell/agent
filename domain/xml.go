@@ -8,12 +8,13 @@ import (
 type Config struct {
 	ImagePath string
 	Name      string
+	DiskPath  string
 }
 
 const DOMAIN_TEMPLATE = `
   <domain type="kvm">
      <name>{{ .Name }}</name>
-     <memory>524288</memory>
+     <memory>1048576</memory>
      <os>
         <type>hvm</type>
         <boot dev="hd" />
@@ -29,18 +30,16 @@ const DOMAIN_TEMPLATE = `
         <interface type="bridge">
            <source bridge="br0" />
            <virtualport type="openvswitch" />
-           <address
-             type="pci"
-             domain="0x0000"
-             bus="0x00"
-             slot="0x03"
-             function="0x0"
-           />
+           <address type="pci" domain="0x0000" bus="0x00" slot="0x03" function="0x0"/>
         </interface>
         <disk type="file" device="disk">
            <driver type="qcow2" cache="none" />
            <source file="{{ .ImagePath }}" />
            <target dev="vda" bus="virtio" />
+        </disk>
+        <disk type="file" device="disk">
+            <source file="{{ .DiskPath }}"/>
+            <target dev="vdb" bus="virtio"/>
         </disk>
      </devices>
   </domain>

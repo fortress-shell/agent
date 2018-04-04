@@ -8,6 +8,7 @@ import (
 	"github.com/fortress-shell/agent/keys"
 	libvirt "github.com/libvirt/libvirt-go"
 	"golang.org/x/crypto/ssh"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -36,17 +37,18 @@ type Worker struct {
 
 const (
 	TIMEOUT              = 10
-	DELAY                = 15
+	DELAY                = 14
 	AUTHORIZED_KEYS_PATH = "/home/ubuntu/.ssh/authorized_keys"
 	IDENTITY_PATH        = "/home/ubuntu/.ssh/id_rsa"
 )
 
 func NewWorker(config *WorkerConfig) (*Worker, error) {
+	log.Println("Connecting to QEMU...")
 	conn, err := libvirt.NewConnect(config.LibVirtUrl)
 	if err != nil {
 		return nil, err
 	}
-
+	log.Println("Connecting to Kafka...")
 	logger, err := kafka.NewKafkaWriter(
 		config.KafkaUrl,
 		config.Topic,
@@ -64,10 +66,12 @@ func NewWorker(config *WorkerConfig) (*Worker, error) {
 	xml, err := domain.NewDomainXml(domain.Config{
 		ImagePath: config.VmPath,
 		Name:      config.Id,
+		DiskPath:  config.DiskPath,
 	})
 	if err != nil {
 		return nil, err
 	}
+	log.Println("Booting VM...")
 	dom, err := conn.DomainCreateXML(*xml, libvirt.DOMAIN_START_AUTODESTROY)
 	if err != nil {
 		return nil, err
@@ -80,12 +84,13 @@ func NewWorker(config *WorkerConfig) (*Worker, error) {
 		logger.Writer.Close()
 		return nil, fmt.Errorf("stopping")
 	}
-
+	log.Println("Getting network interfaces...")
 	adom := domain.AgentDomain{dom}
 	interfaces, err := adom.GetNetworkInterfaces()
 	if err != nil {
 		return nil, err
 	}
+	log.Println("Network interfaces", interfaces)
 	sshClientConfig, publicKey, err := keys.NewKeyPair()
 	if err != nil {
 		return nil, err
