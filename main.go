@@ -19,14 +19,13 @@ const (
 func main() {
 	config := worker.DefaultConfig()
 
-    payload, err := parser.NewPayloadFromFilePath(os.Getenv("CONFIG_PATH"))
-    if err != nil {
-        log.Println(err)
-        os.Exit(FORTRESS_ERROR_STATUS)
-    }
+	payload, err := parser.NewPayloadFromFilePath(config.PayloadPath)
+	if err != nil {
+		log.Println(err)
+		os.Exit(FORTRESS_ERROR_STATUS)
+	}
 
-    tasks := parser.GenerateSteps(payload)
-
+	tasks := parser.GenerateSteps(payload)
 
 	app, err := worker.NewWorker(config)
 	if err != nil {

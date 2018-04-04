@@ -21,8 +21,8 @@ type KafkaStageWriter struct {
 }
 
 type Log struct {
-	BuildId  int `json:"build_id"`
-	UserId   int `json:"user_id"`
+	BuildId  int    `json:"build_id"`
+	UserId   int    `json:"user_id"`
 	Position int    `json:"position"`
 	Content  string `json:"content"`
 }

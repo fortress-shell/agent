@@ -1,9 +1,9 @@
 package steps
 
 import (
-    "os"
-    "fmt"
+	"fmt"
 	"github.com/fortress-shell/agent/worker"
+	"os"
 )
 
 type OverrideCheckoutStep struct {
@@ -26,12 +26,12 @@ func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
 	defer session.Close()
 	session.Stdout = os.Stdout
 	session.Stderr = os.Stdout
-    setup := fmt.Sprintf(script,
-        app.Config.RepositoryUrl,
-        app.Config.Branch,
-        app.Config.RepositoryUrl,
-        app.Config.Branch,
-    )
+	setup := fmt.Sprintf(script,
+		app.Config.RepositoryUrl,
+		app.Config.Branch,
+		app.Config.RepositoryUrl,
+		app.Config.Branch,
+	)
 	err = session.Run(setup)
 	if err != nil {
 		return err

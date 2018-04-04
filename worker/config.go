@@ -1,9 +1,9 @@
 package worker
 
 import (
-    "os"
-    "log"
-    "github.com/caarlos0/env"
+	"github.com/caarlos0/env"
+	"log"
+	"os"
 )
 
 type WorkerConfig struct {
@@ -18,14 +18,15 @@ type WorkerConfig struct {
 	UserId        int    `env:"NOMAD_META_USER_ID,required"`
 	Id            string `env:"NOMAD_JOB_NAME,required"`
 	Identity      string `env:"NOMAD_META_SSH_KEY,required"`
+	PayloadPath   string `env:"PAYLOAD_PATH,required"`
 }
 
 func DefaultConfig() *WorkerConfig {
 	cfg := WorkerConfig{}
 	err := env.Parse(&cfg)
-    if err != nil {
-        log.Println("%s", err)
-        os.Exit(4)
-    }
+	if err != nil {
+		log.Println("%s", err)
+		os.Exit(4)
+	}
 	return &cfg
 }
