@@ -10,7 +10,7 @@ type AgentDomain struct {
 	*libvirt.Domain
 }
 
-func (self *AgentDomain) GetNetworkInterfaces() (*AgentNetworkCommandReply, error) {
+func (a *AgentDomain) GetNetworkInterfaces() (*AgentNetworkCommandReply, error) {
 	var agentNetworkCommand AgentNetworkCommand
 	var agentCommandReply AgentNetworkCommandReply
 	agentNetworkCommand.Execute = "guest-network-get-interfaces"
@@ -18,7 +18,7 @@ func (self *AgentDomain) GetNetworkInterfaces() (*AgentNetworkCommandReply, erro
 	if err != nil {
 		return nil, err
 	}
-	agentCommandReplyJson, err := self.QemuAgentCommand(
+	agentCommandReplyJson, err := a.QemuAgentCommand(
 		string(agentCommandRequest),
 		libvirt.DOMAIN_QEMU_AGENT_COMMAND_MIN,
 		0,
