@@ -17,17 +17,16 @@ const (
 )
 
 func main() {
-	var path string = os.Getenv("CONFIG_PATH")
-
-	payload, err := parser.NewPayloadFromFilePath(path)
-	if err != nil {
-		log.Println(err)
-		os.Exit(FORTRESS_ERROR_STATUS)
-	}
-
-	tasks := parser.GenerateSteps(payload)
-
 	config := worker.DefaultConfig()
+
+    payload, err := parser.NewPayloadFromFilePath(os.Getenv("CONFIG_PATH"))
+    if err != nil {
+        log.Println(err)
+        os.Exit(FORTRESS_ERROR_STATUS)
+    }
+
+    tasks := parser.GenerateSteps(payload)
+
 
 	app, err := worker.NewWorker(config)
 	if err != nil {

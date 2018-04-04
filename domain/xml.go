@@ -42,13 +42,6 @@ const DOMAIN_TEMPLATE = `
            <source file="{{ .ImagePath }}" />
            <target dev="vda" bus="virtio" />
         </disk>
-        <disk type='file' device='disk'>
-            <source file='/home/linux/Images/user-data.img'/>
-            <target dev='vdb' bus='virtio'/>
-        </disk>
-        <console type="pty">
-           <target type="serial" port="1" />
-        </console>
      </devices>
   </domain>
 `
