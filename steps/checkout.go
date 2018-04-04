@@ -30,7 +30,7 @@ func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
 		app.Config.RepositoryUrl,
 		app.Config.Branch,
 		app.Config.RepositoryUrl,
-		app.Config.Branch,
+		app.Config.Commit,
 	)
 	err = session.Run(setup)
 	if err != nil {
