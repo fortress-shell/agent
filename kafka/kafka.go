@@ -10,8 +10,8 @@ import (
 type KafkaWriter struct {
 	Writer   sarama.SyncProducer
 	Id       string
-	BuildId  string
-	UserId  string
+	BuildId  int
+	UserId   int
 	Topic    string
 	Position int
 }
@@ -21,8 +21,8 @@ type KafkaStageWriter struct {
 }
 
 type Log struct {
-	BuildId  string `json:"build_id"`
-	UserId  string `json:"user_id"`
+	BuildId  int    `json:"build_id"`
+	UserId   int    `json:"user_id"`
 	Position int    `json:"position"`
 	Content  string `json:"content"`
 }
@@ -31,7 +31,7 @@ func (k *KafkaStageWriter) Write(p []byte) (n int, err error) {
 	log.Println(string(p))
 	logEntry := Log{
 		BuildId:  k.BuildId,
-		UserId:  k.UserId,
+		UserId:   k.UserId,
 		Position: k.Position,
 		Content:  string(p),
 	}
@@ -52,7 +52,7 @@ func (k *KafkaStageWriter) Write(p []byte) (n int, err error) {
 	return len(p), nil
 }
 
-func NewKafkaWriter(url, topic, id, buildId, userId string) (*KafkaWriter,
+func NewKafkaWriter(url, topic, id string, buildId, userId int) (*KafkaWriter,
 	error) {
 	brokerList := strings.Split(url, ",")
 	config := sarama.NewConfig()

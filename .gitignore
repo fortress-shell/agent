@@ -1,4 +1,2 @@
 .env
-*.pb.go
 agent
-agent.sh
