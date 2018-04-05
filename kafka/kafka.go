@@ -63,6 +63,7 @@ func NewKafkaWriter(url, topic, id string, buildId, userId int) (*KafkaWriter,
 		Writer:  producer,
 		Id:      id,
 		BuildId: buildId,
+		UserId:  userId,
 		Topic:   topic,
 	}
 	return kafkaWriter, nil
