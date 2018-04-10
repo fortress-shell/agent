@@ -59,6 +59,8 @@ func NewWorker(config *WorkerConfig) (*Worker, error) {
 	if err != nil {
 		return nil, err
 	}
+	kafkaLogger := &kafka.KafkaStageWriter{logger}
+	kafkaLogger.Write([]byte("Setting up VM..."))
 
 	stop := make(chan os.Signal)
 	signal.Notify(stop, syscall.SIGTERM, syscall.SIGINT)

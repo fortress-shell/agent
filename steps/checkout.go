@@ -2,6 +2,7 @@ package steps
 
 import (
 	"fmt"
+	"github.com/fortress-shell/agent/kafka"
 	"github.com/fortress-shell/agent/worker"
 	"os"
 )
@@ -22,6 +23,8 @@ const script = `
 
 func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
 	config := app.Config
+	logger := &kafka.KafkaStageWriter{app.Logger}
+	logger.Write([]byte("Setting up repository..."))
 	session, err := app.SSHClient.NewSession()
 	if err != nil {
 		return err
