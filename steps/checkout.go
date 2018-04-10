@@ -43,5 +43,7 @@ func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
 	if err != nil {
 		return err
 	}
+	logger.Write([]byte("Setting up repository success.\n"))
+	logger.Write([]byte("Testing started.\n"))
 	return nil
 }

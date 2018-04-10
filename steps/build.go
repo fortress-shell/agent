@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/fortress-shell/agent/kafka"
 	"github.com/fortress-shell/agent/worker"
-	"io"
 )
 
 type OverrideBuildStep struct {
@@ -25,16 +24,8 @@ func (s *OverrideBuildStep) Run(app *worker.Worker) error {
 		return err
 	}
 	defer session.Close()
-	stdout, err := session.StdoutPipe()
-	if err != nil {
-		return err
-	}
-	stderr, err := session.StderrPipe()
-	if err != nil {
-		return err
-	}
-	go io.Copy(logger, stdout)
-	go io.Copy(logger, stderr)
+	session.Stdout = logger
+	session.Stderr = logger
 	for k, v := range s.Environment {
 		command.WriteString(fmt.Sprintf("export %s=%s;", k, v))
 	}
