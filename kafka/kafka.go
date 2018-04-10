@@ -9,7 +9,7 @@ import (
 )
 
 type KafkaWriter struct {
-	Writer   sarama.AsyncProducer
+	Writer   sarama.SyncProducer
 	Id       string
 	BuildId  int
 	UserId   int
@@ -40,11 +40,11 @@ func (k *KafkaStageWriter) Write(p []byte) (n int, err error) {
 	if err != nil {
 		return 0, err
 	}
-	k.Writer.Input() <- &sarama.ProducerMessage{
+	_, _, err = k.Writer.SendMessage(&sarama.ProducerMessage{
 		Topic: k.Topic,
 		Key:   sarama.StringEncoder(k.Id),
 		Value: sarama.ByteEncoder(b),
-	}
+	})
 	if err != nil {
 		return 0, err
 	}
@@ -62,7 +62,7 @@ func NewKafkaWriter(url, topic, id string, buildId, userId int) (*KafkaWriter,
 	config.Producer.Flush.Messages = 1
 	config.Producer.Flush.Bytes = 4
 	config.Net.KeepAlive = 15 * time.Minute
-	producer, err := sarama.NewAsyncProducer(brokerList, config)
+	producer, err := sarama.NewSyncProducer(brokerList, config)
 	if err != nil {
 		return nil, err
 	}
