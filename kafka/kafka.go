@@ -5,6 +5,7 @@ import (
 	"github.com/Shopify/sarama"
 	"log"
 	"strings"
+	"time"
 )
 
 type KafkaWriter struct {
@@ -58,6 +59,9 @@ func NewKafkaWriter(url, topic, id string, buildId, userId int) (*KafkaWriter,
 	config.Producer.RequiredAcks = sarama.WaitForAll
 	config.Producer.Retry.Max = 10
 	config.Producer.Return.Successes = true
+	config.Producer.Flush.Messages = 1
+	config.Producer.Flush.Bytes = 4
+	config.Net.KeepAlive = 15 * time.Minute
 	producer, err := sarama.NewSyncProducer(brokerList, config)
 	if err != nil {
 		return nil, err
