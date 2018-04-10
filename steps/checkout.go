@@ -24,7 +24,7 @@ const script = `
 func (s *OverrideCheckoutStep) Run(app *worker.Worker) error {
 	config := app.Config
 	logger := &kafka.KafkaStageWriter{app.Logger}
-	logger.Write([]byte("Setting up repository..."))
+	logger.Write([]byte("Setting up repository...\n"))
 	session, err := app.SSHClient.NewSession()
 	if err != nil {
 		return err
