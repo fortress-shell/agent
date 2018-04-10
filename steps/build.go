@@ -3,6 +3,7 @@ package steps
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"github.com/fortress-shell/agent/kafka"
 	"github.com/fortress-shell/agent/worker"
 )
@@ -24,8 +25,16 @@ func (s *OverrideBuildStep) Run(app *worker.Worker) error {
 		return err
 	}
 	defer session.Close()
-	session.Stdout = logger
-	session.Stderr = logger
+	stdout, err := session.StdoutPipe()
+  if err != nil {
+  	return err
+  }
+  stderr, err := session.StderrPipe()
+  if err != nil {
+  	return err
+  }
+	go io.Copy(logger, stdout)
+  go io.Copy(logger, stderr)
 	for k, v := range s.Environment {
 		command.WriteString(fmt.Sprintf("export %s=%s;", k, v))
 	}
