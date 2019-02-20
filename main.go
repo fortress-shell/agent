@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	SUCCESS_STATUS        = iota
+	SUCCESS_STATUS = iota
 	FAILURE_STATUS
 	TIMEOUT_STATUS
 	STOP_STATUS
