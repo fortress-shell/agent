@@ -10,10 +10,10 @@ import (
 
 const (
 	SUCCESS_STATUS        = iota
-	FAILURE_STATUS        = iota
-	TIMEOUT_STATUS        = iota
-	STOP_STATUS           = iota
-	FORTRESS_ERROR_STATUS = iota
+	FAILURE_STATUS
+	TIMEOUT_STATUS
+	STOP_STATUS
+	FORTRESS_ERROR_STATUS
 )
 
 func main() {
